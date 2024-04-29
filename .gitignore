@@ -7,10 +7,12 @@
 .pictures
 dataset/
 
-train_model
+models
 
 .ipynb_checkpoints/
 
 *.pyc
 
 __pycache__/
+
+.DS_Store

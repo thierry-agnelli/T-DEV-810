@@ -29,11 +29,13 @@ class ImageManager:
         plt.savefig('./.pictures/radio.png')
         plt.show()
 
-    def load_batch(self, dataset_type_folder):
+    def load_batch(self, dataset_type_folder, batch_qty, batch_number):
         images_batch = {
             "images": [],
             "labels": []
         }
+
+        ended = False
 
         print("Load normal batch")
         # Normal
@@ -42,25 +44,29 @@ class ImageManager:
         
         file_list = os.listdir(folder_path)
 
-        i = 0
+        start = batch_qty*batch_number
+        end =  batch_qty*batch_number + batch_qty - 1
 
-        for file in file_list:
-            print(f"{i}/{len(file_list)}\r", end='')
-            if(file != ".DS_Store"):
-                i += 1
-                img = self.convert(current_path + file)
-                images_batch["images"].append(np.array(img))
-                images_batch["labels"].append("normal")
-        
-        print("\n batch loaded.")
+        if end >= len(file_list) - 1:
+            end = len(file_list) - 1
 
-        return images_batch
+        if start < len(file_list) - 1:  
+            print("loading normal")
 
-    def load_batch_p(self, dataset_type_folder):
-        images_batch = {
-            "images": [],
-            "labels": []
-        }
+            i = 0
+            for file in file_list[start : end]:
+                print(f"{i}/{len(file_list)}\r", end='')
+                if(file != ".DS_Store"):
+                    i += 1
+                    img = self.convert(current_path + file)
+                    images_batch["images"].append(np.array(img))
+                    images_batch["labels"].append("normal")
+
+            ended = False
+        else:
+            ended = True
+
+        # print("\n batch loaded.")
 
         # Pneumonia
         print("Load pneumonia batch")
@@ -71,20 +77,31 @@ class ImageManager:
         
         file_list = os.listdir(folder_path)
 
-        i = 0
+        end =  batch_qty*batch_number + batch_qty - 1
 
+        if end >= len(file_list) - 1:
+            end = len(file_list) - 1
+
+
+        if start < len(file_list) - 1:  
+            print("loading pneumonia")
+
+            i = 0
+            for file in file_list[start : end]:
+                print(f"{i}/{len(file_list)}\r", end='')
+                if(file != ".DS_Store"):
+                    i+=1
+                    img = self.convert(current_path + file)
+                    images_batch["images"].append(np.array(img))
+                    images_batch["labels"].append(file.split("_")[1])
+
+            print("\n batch loaded.")
+
+            ended = False
+        else:
+            ended = True
         
-        for file in file_list:
-            print(f"{i}/{len(file_list)}\r", end='')
-            if(file != ".DS_Store"):
-                i+=1
-                img = self.convert(current_path + file)
-                images_batch["images"].append(np.array(img))
-                images_batch["labels"].append(file.split("_")[1])
-
-        print("\n batch loaded.")
-
-        return images_batch
+        return (images_batch , ended)
 
 
             

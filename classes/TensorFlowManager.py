@@ -2,11 +2,16 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 import numpy as np
 import os
+import math
+
+from pathlib import Path
 
 class TensorFlowManager:
     def __init__(self):
         self.model = tf.keras.models.Sequential([
-            # tf.keras.layers.Flatten(input_shape=(28, 28)),
+            # tf.keras.layers.Flatten(input_shape=(2700, 3000)),
+            tf.keras.layers.Input(shape=(2700, 3000)),
+            # tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(128, activation="relu"),
             tf.keras.layers.Dropout(0.2),
             tf.keras.layers.Dense(10, activation='softmax')
@@ -15,21 +20,47 @@ class TensorFlowManager:
             loss='sparse_categorical_crossentropy',
             metrics=['accuracy'])
 
-    def tf_learning(self, train_dataset, test_dataset):
-        # mnist = tf.keras.datasets.mnist
-        # (x_train, y_train),(x_test, y_test) = mnist.load_data()
-        # x_train, x_test = x_train / 255.0, x_test / 255.0
+    def old_tf_learning(self, train_dataset, test_dataset):
 
         train_batch_images = np.array(train_dataset["images"])/255.0
         train_batch_labels = np.array(train_dataset["labels"])
         
         test_batch_images = np.array(test_dataset["images"])/255.0
         test_batch_labels = np.array(test_dataset["labels"])
+
         
+
         self.model.fit(train_batch_images, train_batch_labels, epochs=5)
 
         # self.model.evaluate(test_batch_images, test_batch_labels)
-        self.model.save("./train_model/myModel.h5")
+        self.model.save("./train_model/pneumonia.h5")
+
+
+    def learning(self, dataset):
+        # preprocessing
+        print("preprocessing images...")
+        
+        i=0
+        print("0%\r", end='')
+        images_batch = []
+        for image in dataset["images"]:
+            img = np.array(image)
+            img = tf.expand_dims(img, axis=-1)
+            img = tf.image.resize_with_pad(img, 2700, 3000)
+            img = tf.squeeze(img)
+            images_batch.append(img)
+            i += 1
+            print(f"{math.floor(i/len(dataset["images"])*10000)/100}%\r", end='')
+
+        print("\nPreprocessing ended.")
+
+        if os.path.isfile("./models/pneumonia.h5"):
+            model = load_model("./train_model/pneumonia.h5")
+        else:
+            model = self.model
+
+        model.fit(np.array(images_batch),np.array(dataset["labels"]), epochs=5)
+        model.save("./model/pneumonia.h5")
 
    
     def predict(self, dataset, predict_index):
