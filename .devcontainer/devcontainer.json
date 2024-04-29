@@ -1,0 +1,7 @@
+{
+    "name": "T-DEV-810",
+    "build": {
+        "context": ".",
+        "dockerfile": "Dockerfile"
+    }
+}

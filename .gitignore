@@ -1,0 +1,16 @@
+*.png
+*.jpg
+*.jpeg
+
+.ipynb_checkpoints
+
+.pictures
+dataset/
+
+train_model
+
+.ipynb_checkpoints/
+
+*.pyc
+
+__pycache__/
