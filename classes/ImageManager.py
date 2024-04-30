@@ -15,7 +15,7 @@ class ImageManager:
 
         with Image.open(image_path) as img:
             gray_image = img.convert("L")
-            # gray_image = abs(np.array(gray_img).astype(np.int16)-255)
+            gray_image = abs(np.array(gray_image).astype(np.int16))
 
             return gray_image
 
@@ -45,28 +45,32 @@ class ImageManager:
         file_list = os.listdir(folder_path)
 
         start = batch_qty*batch_number
-        end =  batch_qty*batch_number + batch_qty - 1
+        end =  batch_qty*batch_number + batch_qty
 
-        if end >= len(file_list) - 1:
-            end = len(file_list) - 1
+        if end >= len(file_list):
+            end = len(file_list)
 
         if start < len(file_list) - 1:  
             print("loading normal")
 
             i = 0
             for file in file_list[start : end]:
-                print(f"{i}/{len(file_list)}\r", end='')
+                # print(f"{i}/{len(file_list)}\r", end='')
+                print(f"{i}/{batch_qty}\r", end='')
+
+                i += 1
+
                 if(file != ".DS_Store"):
-                    i += 1
                     img = self.convert(current_path + file)
-                    images_batch["images"].append(np.array(img))
-                    images_batch["labels"].append("normal")
+                    
+                    images_batch["images"].append(img.tolist())
+                    images_batch["labels"].append(0)
 
             ended = False
         else:
             ended = True
 
-        # print("\n batch loaded.")
+        print("\nbatch loaded.")
 
         # Pneumonia
         print("Load pneumonia batch")
@@ -77,10 +81,10 @@ class ImageManager:
         
         file_list = os.listdir(folder_path)
 
-        end =  batch_qty*batch_number + batch_qty - 1
+        end =  batch_qty*batch_number + batch_qty
 
-        if end >= len(file_list) - 1:
-            end = len(file_list) - 1
+        if end >= len(file_list):
+            end = len(file_list)
 
 
         if start < len(file_list) - 1:  
@@ -88,19 +92,25 @@ class ImageManager:
 
             i = 0
             for file in file_list[start : end]:
-                print(f"{i}/{len(file_list)}\r", end='')
+                # print(f"{i}/{len(file_list)}\r", end='')
+                print(f"{i}/{batch_qty}\r", end='')
+                
+                i+=1
+
                 if(file != ".DS_Store"):
-                    i+=1
                     img = self.convert(current_path + file)
-                    images_batch["images"].append(np.array(img))
-                    images_batch["labels"].append(file.split("_")[1])
+                    images_batch["images"].append(img.tolist())
+                    if file.split("_")[1] == "bacteria":
+                        images_batch["labels"].append(1)
+                    else:
+                        images_batch["labels"].append(2)
 
             print("\n batch loaded.")
 
             ended = False
         else:
             ended = True
-        
+
         return (images_batch , ended)
 
 
