@@ -69,6 +69,9 @@ class TensorFlowManager:
 
         model.fit(np.array(images_batch),np.array(dataset["labels"]), epochs=5)
         model.save("./models/pneumonia.h5")
+        
+        del model
+        del images_batch
    
     def predict(self, dataset, predict_index):
         batch_images = np.array(dataset["images"])/255.0
