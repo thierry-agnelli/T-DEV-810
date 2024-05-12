@@ -57,11 +57,7 @@ class TensorFlowManager:
         # self.model.fit(train_dataset, epochs=self.epochs)
         # self.model.fit(train_dataset, epochs=12, steps_per_epoch=250, callbacks=[early_stopping])
         # self.model.fit(train_dataset, epochs=self.epochs, callbacks=[early_stopping])        
-        history = self.model.fit(train_dataset, epochs=self.epochs, callbacks=[early_stopping], validation_data=validation_dataset)
-
-        print("#"*25)
-        print(history)
-        print("#"*25)
+        self.model.fit(train_dataset, epochs=self.epochs, callbacks=[early_stopping], validation_data=validation_dataset)
 
         self.save_model()   
 
