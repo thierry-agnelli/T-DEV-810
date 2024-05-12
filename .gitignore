@@ -1,19 +1,14 @@
+# Files
 *.png
 *.jpg
 *.jpeg
-
-.ipynb_checkpoints
-
-.pictures
-dataset/
-
-models
-
-.ipynb_checkpoints/
-
 *.pyc
-
-__pycache__/
-
 .DS_Store
+
+# Folders
+__pycache__/
+.ipynb_checkpoints/
 .venv
+.pictures
+.old
+datasets*/
