@@ -6,23 +6,21 @@ import os
 from classes import ImageManager
 from classes import TensorFlowManager
 
-batch_size = 750
-
 print(" Get images Data")
 img_manager = ImageManager("./assets/datasets/")
 train_data = img_manager.get_images_data("train")
 validation_data = img_manager.get_images_data("val")
 
-batch_size = 5096
-epochs = 100
+batch_size = 4096
+epochs = 40
 shuffle = len(train_data["paths"])
-repeat = 100
+repeat = 5
 shape = 224
 
 
 print("Trains model")
 tf_manager = TensorFlowManager("pneumonia", batch_size=batch_size, epochs=epochs, shuffle=shuffle, repeat=repeat, shape=shape)
-tf_manager.train(train_data, validation_data)
+loss_history, accuracy_history = tf_manager.train(train_data, validation_data)
 
 
 print("learning done")
@@ -97,7 +95,7 @@ bar = ax.bar(chart_labels, delta, bottom=bottom, color="gray")
 ax.set_ylabel("Result in %")
 ax.set_title("Model prediction results")
 # ax.legend(["this a legend.","blah blah blah"])
-ax.set_xlabel(f"batch_size: {batch_size} / epochs: {epochs} / shuffle: {shuffle} / repeat: {repeat}")
+ax.set_xlabel(f"shape: {shape} / batch_size: {batch_size} / epochs: {epochs} / shuffle: {shuffle} / repeat: {repeat}")
 # ax.legend(title="Legend", loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
 
 # plt.show()
@@ -105,5 +103,16 @@ plt.savefig(f"./results/chart.png")
 
 chart_count = len(os.listdir("./results"))
 plt.savefig(f"./results/chart_#{chart_count}.png")
+
+plt.close()
+
+plt.plot(loss_history)
+plt.plot(np.array(accuracy_history)*10)
+# ax.set_xlabel(f"Nombre d'epochs : {len(loss_history)} / loss: {loss_history[-1]} / accuracy: {accuracy_history[-1]*100}")
+
+plt.savefig(f"./results/plots/plots.png")
+
+plot_count = len(os.listdir("./results/plots"))
+plt.savefig(f"./results/plots/plot_#{plot_count}.png")
 
 plt.close()

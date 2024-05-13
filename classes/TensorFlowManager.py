@@ -10,7 +10,7 @@ from pathlib import Path
 _shape = (400, 400)
 
 class TensorFlowManager:
-    def __init__(self, model_name, epochs=5, batch_size=1, shuffle=None, repeat=None, shape=400):
+    def __init__(self, model_name, epochs=5, batch_size=1, shuffle=None, repeat=None, shape=400, patience=None):
         self.model_name = model_name
         
         self.path = "./assets/datasets/train/NORMAL/"
@@ -18,6 +18,7 @@ class TensorFlowManager:
         self.epochs = epochs
         self.shuffle = shuffle
         self.repeat = repeat
+        self.patience = patience
         self.shape = (shape, shape)
 
         if os.path.isfile(f"./models/{model_name}.keras"):
@@ -43,23 +44,24 @@ class TensorFlowManager:
         self.model.save(f"./models/{self.model_name}.keras")
 
     def train(self, train_data, validation_data):
-        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
 
-        train_dataset = self.__create_dataset(train_data)
-
-        if self.repeat != None:
-            if self.repeat == 0:
-                train_dataset = train_dataset.repeat()
-            else:
-                train_dataset = train_dataset.repeat(self.repeat)
+        train_dataset = self.__create_dataset(train_data, repeat=self.repeat)
         
         validation_dataset = self.__create_dataset(validation_data)
         # self.model.fit(train_dataset, epochs=self.epochs)
         # self.model.fit(train_dataset, epochs=12, steps_per_epoch=250, callbacks=[early_stopping])
         # self.model.fit(train_dataset, epochs=self.epochs, callbacks=[early_stopping])        
-        self.model.fit(train_dataset, epochs=self.epochs, callbacks=[early_stopping], validation_data=validation_dataset)
+        history = self.model.fit(train_dataset, epochs=self.epochs, callbacks=[early_stopping], validation_data=validation_dataset)
 
-        self.save_model()   
+        self.save_model()
+        # Historique de la loss
+        loss_history = history.history['loss']
+
+        # Historique de l'accuracy
+        accuracy_history = history.history['accuracy']
+
+        return (loss_history, accuracy_history)
 
     def evaluate(self, images_data):
         dataset = self.__create_dataset(images_data)
@@ -83,16 +85,27 @@ class TensorFlowManager:
 
     # Private methods
 
-    def __create_dataset(self, images_data):
+    def __create_dataset(self, images_data, repeat=None):
+        # Création dataset
         dataset = tf.data.Dataset.from_tensor_slices((images_data["paths"], images_data["labels"]))
+        # Pre processing images
         dataset = dataset.map(self.__preprocess_image)
-        
+
+        # Mélange du dataset
         if self.shuffle != None:
             dataset = dataset.shuffle(self.shuffle)
 
+        # Répétitions du dataset
+        if repeat != None:
+            if repeat == 0:
+                dataset = dataset.repeat()
+            else:
+                dataset = dataset.repeat(self.repeat)
+
+        # Découpe du dataset en lot
         dataset = dataset.batch(self.batch_size)
 
-        dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        # dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
         return dataset
 
