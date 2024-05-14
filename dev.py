@@ -12,15 +12,15 @@ train_data = img_manager.get_images_data("train")
 validation_data = img_manager.get_images_data("val")
 
 batch_size = 4096
-epochs = 40
+epochs = 25
 shuffle = len(train_data["paths"])
-repeat = 5
+repeat = 2
 shape = 224
 
 
 print("Trains model")
 tf_manager = TensorFlowManager("pneumonia", batch_size=batch_size, epochs=epochs, shuffle=shuffle, repeat=repeat, shape=shape)
-loss_history, accuracy_history = tf_manager.train(train_data, validation_data)
+loss_history, accuracy_history, val_loss_history, val_accuracy_history = tf_manager.train(train_data, validation_data)
 
 
 print("learning done")
@@ -106,8 +106,10 @@ plt.savefig(f"./results/chart_#{chart_count}.png")
 
 plt.close()
 
-plt.plot(loss_history)
-plt.plot(np.array(accuracy_history)*10)
+plt.plot(loss_history, color="purple")
+plt.plot(val_loss_history, color="red")
+plt.plot(np.array(accuracy_history)*10, color="green")
+plt.plot(np.array(val_accuracy_history)*10, color="orange")
 # ax.set_xlabel(f"Nombre d'epochs : {len(loss_history)} / loss: {loss_history[-1]} / accuracy: {accuracy_history[-1]*100}")
 
 plt.savefig(f"./results/plots/plots.png")

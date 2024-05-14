@@ -7,8 +7,6 @@ import math
 
 from pathlib import Path
 
-_shape = (400, 400)
-
 class TensorFlowManager:
     def __init__(self, model_name, epochs=5, batch_size=1, shuffle=None, repeat=None, shape=400, patience=None):
         self.model_name = model_name
@@ -20,6 +18,7 @@ class TensorFlowManager:
         self.repeat = repeat
         self.patience = patience
         self.shape = (shape, shape)
+        self.index_count = 0
 
         if os.path.isfile(f"./models/{model_name}.keras"):
             self.model = load_model(f"./models/{model_name}.keras")
@@ -29,39 +28,44 @@ class TensorFlowManager:
                 tf.keras.layers.Input(shape=self.shape),
                 tf.keras.layers.Flatten(),
                 tf.keras.layers.Dense(128, activation="relu"),
-                tf.keras.layers.Dropout(0.2),
-                tf.keras.layers.Dense(10, activation='softmax')
+                tf.keras.layers.Dropout(0.1),
+                tf.keras.layers.Dense(10, activation="softmax")
             ])
             
         self.__compile_model()
 
     def __compile_model(self):
-        self.model.compile(optimizer='adam',
-            loss='sparse_categorical_crossentropy',
-            metrics=['accuracy'])
+        self.model.compile(optimizer="adam",
+            loss="sparse_categorical_crossentropy",
+            metrics=["accuracy"])
 
     def save_model(self):
         self.model.save(f"./models/{self.model_name}.keras")
 
     def train(self, train_data, validation_data):
-        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+        early_stopping = EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
 
         train_dataset = self.__create_dataset(train_data, repeat=self.repeat)
         
         validation_dataset = self.__create_dataset(validation_data)
-        # self.model.fit(train_dataset, epochs=self.epochs)
+        
         # self.model.fit(train_dataset, epochs=12, steps_per_epoch=250, callbacks=[early_stopping])
-        # self.model.fit(train_dataset, epochs=self.epochs, callbacks=[early_stopping])        
         history = self.model.fit(train_dataset, epochs=self.epochs, callbacks=[early_stopping], validation_data=validation_dataset)
 
-        self.save_model()
         # Historique de la loss
-        loss_history = history.history['loss']
+        loss_history = history.history["loss"]
+        val_loss_history = history.history["val_loss"]
 
-        # Historique de l'accuracy
-        accuracy_history = history.history['accuracy']
+        # Historique de l"accuracy
+        accuracy_history = history.history["accuracy"]
+        val_accuracy_history = history.history["val_accuracy"]
 
-        return (loss_history, accuracy_history)
+        self.save_model()
+
+        print("repetion augmentation result")
+        print(self.index_count)
+
+        return (loss_history, accuracy_history, val_loss_history, val_accuracy_history)
 
     def evaluate(self, images_data):
         dataset = self.__create_dataset(images_data)
@@ -88,12 +92,17 @@ class TensorFlowManager:
     def __create_dataset(self, images_data, repeat=None):
         # Création dataset
         dataset = tf.data.Dataset.from_tensor_slices((images_data["paths"], images_data["labels"]))
+
         # Pre processing images
         dataset = dataset.map(self.__preprocess_image)
 
         # Mélange du dataset
         if self.shuffle != None:
             dataset = dataset.shuffle(self.shuffle)
+
+        
+        # Découpe du dataset en lot
+        dataset = dataset.batch(self.batch_size)
 
         # Répétitions du dataset
         if repeat != None:
@@ -102,8 +111,9 @@ class TensorFlowManager:
             else:
                 dataset = dataset.repeat(self.repeat)
 
-        # Découpe du dataset en lot
-        dataset = dataset.batch(self.batch_size)
+                dataset = dataset.enumerate()
+                dataset = dataset.map(self.__cycle_augmentation)
+
 
         # dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
@@ -123,31 +133,23 @@ class TensorFlowManager:
             greatest_shape_size = len(image[0])
 
         # Resize image 
-        # image = tf.image.resize_with_pad(image, 2700,3000)
         image = tf.image.resize_with_pad(image, greatest_shape_size, greatest_shape_size)
         image = tf.image.resize(image, [self.shape[0], self.shape[1]])
-
-        # Format gray level
-        # image = image / 255.0
         
         return image, label
-    
-    def dev_preprocess(self, path):
-        image = self.__preprocess_image(path, "")
+
+    def __cycle_augmentation(self, index, data):
+        image, label = data
+
         
-        return image
+        if (index + 1) % 2 == 0:
+            image = tf.image.adjust_contrast(image, 0.25)
+        # if (index + 1) % 3 == 0:
+        #     image = tf.image.adjust_saturation(image, 0.25)
 
-
-    # Static methods
+        return image, label
     
-    @staticmethod
-    def __preprocessing_images(image):
-        img = np.array(image)
-        img = tf.expand_dims(img, axis=-1)
-        img = tf.image.resize_with_pad(img, 2700, 3000)
-        img = tf.image.resize(img, [shape[0], shape[1]])
-        img = tf.squeeze(img)
-        return img
+    # Static methods
 
     @staticmethod
     def about():
