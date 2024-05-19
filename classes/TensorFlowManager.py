@@ -43,7 +43,7 @@ class TensorFlowManager:
         self.model.save(f"./models/{self.model_name}.keras")
 
     def train(self, train_data, validation_data):
-        early_stopping = EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
+        early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
 
         train_dataset = self.__create_dataset(train_data, repeat=self.repeat)
         
@@ -111,8 +111,8 @@ class TensorFlowManager:
             else:
                 dataset = dataset.repeat(self.repeat)
 
-                dataset = dataset.enumerate()
-                dataset = dataset.map(self.__cycle_augmentation)
+                # dataset = dataset.enumerate()
+                # dataset = dataset.map(self.__cycle_augmentation)
 
 
         # dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
@@ -125,7 +125,8 @@ class TensorFlowManager:
         image = tf.io.read_file(path)
         image = tf.image.decode_jpeg(image, channels=1)
         image = tf.image.convert_image_dtype(image, tf.float32)
-        
+        image = tf.image.adjust_jpeg_quality(image,100)
+   
         # Get image greatest shape size
         if len(image) > len(image[0]):
             greatest_shape_size = len(image)
@@ -144,8 +145,8 @@ class TensorFlowManager:
         
         if (index + 1) % 2 == 0:
             image = tf.image.adjust_contrast(image, 0.25)
-        # if (index + 1) % 3 == 0:
-        #     image = tf.image.adjust_saturation(image, 0.25)
+        if (index + 1) % 3 == 0:
+            image = tf.image.adjust_brightness(image, 0.25)
 
         return image, label
     

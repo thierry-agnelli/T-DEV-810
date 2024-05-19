@@ -7,14 +7,15 @@ from classes import ImageManager
 from classes import TensorFlowManager
 
 print(" Get images Data")
+
 img_manager = ImageManager("./assets/datasets/")
 train_data = img_manager.get_images_data("train")
 validation_data = img_manager.get_images_data("val")
 
 batch_size = 4096
-epochs = 25
+epochs = 50
 shuffle = len(train_data["paths"])
-repeat = 2
+repeat = 3
 shape = 224
 
 
@@ -23,7 +24,7 @@ tf_manager = TensorFlowManager("pneumonia", batch_size=batch_size, epochs=epochs
 loss_history, accuracy_history, val_loss_history, val_accuracy_history = tf_manager.train(train_data, validation_data)
 
 
-print("learning done")
+print("Training done")
 
 def comparaison(np_labels, np_predictions, mask):
     comparaisons =  np_labels[mask] == np_predictions[mask]
@@ -99,10 +100,10 @@ ax.set_xlabel(f"shape: {shape} / batch_size: {batch_size} / epochs: {epochs} / s
 # ax.legend(title="Legend", loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
 
 # plt.show()
-plt.savefig(f"./results/chart.png")
+plt.savefig(f"./results/charts/chart.png")
 
-chart_count = len(os.listdir("./results"))
-plt.savefig(f"./results/chart_#{chart_count}.png")
+chart_count = len(os.listdir("./results/charts"))
+plt.savefig(f"./results/charts/chart_#{chart_count}.png")
 
 plt.close()
 
